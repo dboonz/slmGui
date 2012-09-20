@@ -23,7 +23,11 @@ class slmGui(Tkinter.Tk):
   def ProcessInputAndWritePhase(self):
     self.activeObject.processInput()
     # update graph
+    self.updateGraph()
     self.writePhase()
+  
+  def updateGraph(self):
+    print "UpdateGraph not implemented"
 
   def writePhase(self):
     print "writePhase: Not implemented"

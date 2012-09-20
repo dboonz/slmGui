@@ -23,10 +23,25 @@ class slmGui(wx.Frame):
     self.sizer.Add(self.applyButton,(10,10))
     self.Bind(wx.EVT_BUTTON,self.ProcessInputAndWritePhase,self.applyButton)
 
-    self.sineObject = SinFunction(self)
-    self.activeObject = self.sineObject
+    # add notebook
+    self.nb = wx.Notebook(self,-1)
+    self.nb.sizer = wx.GridBagSizer()
+    
+
+#    self.sineObject = SinFunction(self)
+#    self.nb.AddPage(self.sineObject,"SINE")
+    self.p1 = PageOne(self.nb)
+    self.nb.AddPage(self.p1,"Test")
+    
+    self.activeObject = self.p1.t
+#    self.activeObject.SetFocus()
+
+    # put in grid manager
+    self.sizer.Add(self.nb,(1,0),(9,9),wx.EXPAND)
+
 
     self.sizer.AddGrowableCol(0)
+    
     self.SetSizerAndFit(self.sizer)
     self.Show(True)
 #
@@ -42,6 +57,18 @@ class slmGui(wx.Frame):
   def writePhase(self):
     print "writePhase: Not implemented"
 #
+
+class PageOne(wx.Panel):
+  def __init__(self,parent):
+    wx.Panel.__init__(self,parent)
+    self.sizer = wx.GridBagSizer()
+    self.t = SinFunction(self)
+    self.SetSizerAndFit(self.sizer)
+    
+
+    #SinFunction(self)
+
+
 
 # all functions should have the same properties:
 class PhaseFunction():
@@ -94,6 +121,10 @@ class SinFunction(PhaseFunction):
       self.phi = float(self.entryPhi.GetValue())
     except ValueError :
       print "One of the entries is not a number!"
+
+      print self.entryAmp.GetValue()
+      print self.entryW.GetValue()
+      print self.entryPhi.GetValue()
       #TODO : create an error dialog
     
     print "parameters will be: "
