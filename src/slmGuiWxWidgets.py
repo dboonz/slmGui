@@ -5,6 +5,39 @@ try :
 except ImportError :
   raise ImportError, "The wxPython module is required to run this program"
 
+import numpy
+import numpy as np
+import matplotlib
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_wx import FigureCanvasWx as FigureCanvas
+
+from matplotlib.backends.backend_wx import NavigationToolbar2Wx
+
+
+class Plotter(wx.Panel):
+  " Simple plotter class"
+  def __init__(self,parent):
+    self.parent = parent
+    wx.Panel.__init__(self,parent,-1,size=(50,50))
+    self.sizer = wx.BoxSizer(wx.VERTICAL)
+    self.figure = matplotlib.figure.Figure()
+    self.ax1 = self.figure.add_subplot(211)
+    self.ax2 = self.figure.add_subplot(212,sharex=self.ax1)
+    self.figure.subplots_adjust(hspace=0.5)
+    t = np.linspace(0,1,100)
+    y1 = np.sin(t)
+    y2 = np.cos(t)
+    self.ax1.plot(t,y1)
+    self.ax1.set_xlabel("Wavelength [nm]")
+    self.ax1.set_ylabel("Phase [rad]")
+    self.ax2.plot(t,y2)
+    self.canvas = FigureCanvas(self,-1,self.figure)
+    self.sizer.Add(self.canvas)
+    self.navtoolbar = NavigationToolbar2Wx(self.canvas)
+    self.sizer.Add(self.navtoolbar)
+    self.SetSizer(self.sizer)
+    self.Fit()
+
 
 class slmGui(wx.Frame):
   def __init__(self,parent,id=-1,title='SLM control'):
@@ -18,7 +51,7 @@ class slmGui(wx.Frame):
 
     # add buttons:
     self.applyButton = wx.Button(self,-1,label="Apply")
-    self.sizer.Add(self.applyButton,(10,10))
+    self.sizer.Add(self.applyButton,(4,5))
     self.Bind(wx.EVT_BUTTON,self.ProcessInputAndWritePhase,self.applyButton)
 
     # add notebook
@@ -28,16 +61,17 @@ class slmGui(wx.Frame):
     self.sine = FunctionObjectWrapper(self.nb,SinFunction)
     self.cosine = FunctionObjectWrapper(self.nb,CosFunction)
 
-    self.nb.AddPage(self.sine,"Sine")
     self.nb.AddPage(self.cosine,"Cosine")
+    self.nb.AddPage(self.sine,"Sine")
     
-    self.activeObject = self.sine.phasefun
-    print self.activeObject
-#    self.activeObject.SetFocus()
+    
+    self.activeObject = self.cosine.phasefun
+    
+    self.sizer.Add(self.nb,(1,5),(2,4),wx.EXPAND)
 
-    # put in grid manager
-    self.sizer.Add(self.nb,(4,0),(10,10),wx.EXPAND)
-
+    # add plot
+    self.plot = Plotter(self)
+    self.sizer.Add(self.plot,(1,1),(4,4),wx.EXPAND)
 
     self.sizer.AddGrowableCol(0)
     
@@ -101,6 +135,7 @@ class PhaseFunction():
 
 
 class CosFunction(PhaseFunction):
+  "SHOULD BE KEPT! REMOVE SINFUNCTION!"
   def __str__(self):
     return "Cosine!"
   def returnFunction(self):
@@ -114,14 +149,20 @@ class CosFunction(PhaseFunction):
     self.phi = 1
 
     # create entry boxes for the different props:
-    self.entryAmp = wx.TextCtrl(self.parent,-1,value=u"Amp")
-    self.parent.sizer.Add(self.entryAmp,(1,1),(1,1),wx.EXPAND)
+    amptext = wx.StaticText(self.parent,-1,label="Amp [rad]")
+    self.parent.sizer.Add(amptext,(1,1),(1,1))
+    self.entryAmp = wx.TextCtrl(self.parent,-1,value=u"0")
+    self.parent.sizer.Add(self.entryAmp,(1,2),(1,1),wx.EXPAND)
+    
+    wtext = wx.StaticText(self.parent,-1,label="w [rad]")
+    self.parent.sizer.Add(wtext,(2,1),(1,1),wx.RIGHT)
+    self.entryW = wx.TextCtrl(self.parent,-1,value=u"0")
+    self.parent.sizer.Add(self.entryW,(2,2),(1,1),wx.EXPAND)
 
-    self.entryW = wx.TextCtrl(self.parent,-1,value=u"W")
-    self.parent.sizer.Add(self.entryW,(2,1),(1,1),wx.EXPAND)
-
-    self.entryPhi = wx.TextCtrl(self.parent,-1,value=u"Phi")
-    self.parent.sizer.Add(self.entryPhi,(3,1),(1,1),wx.EXPAND)
+    phitext = wx.StaticText(self.parent,-1,label="phi [rad]")
+    self.parent.sizer.Add(phitext,(3,1),(1,1),wx.RIGHT)
+    self.entryPhi = wx.TextCtrl(self.parent,-1,value=u"0")
+    self.parent.sizer.Add(self.entryPhi,(3,2),(1,1),wx.EXPAND)
 
   def processInput(self):
     " update amp, w and phi, and display"
@@ -131,6 +172,8 @@ class CosFunction(PhaseFunction):
       self.w   = float(self.entryW.GetValue())
       self.phi = float(self.entryPhi.GetValue())
     except ValueError :
+      dialog = wx.MessageDialog(self.parent,"One of the entries is incorrect.",'Error!',wx.OK|wx.ICON_ERROR)
+      dialog.ShowModal()
       print "One of the entries is not a number!"
 
       print self.entryAmp.GetValue()

@@ -83,6 +83,7 @@ class CanvasFrame(wx.Frame):
             # Mac platform (OSX 10.3, MacPython) does not seem to cope with
             # having a toolbar in a sizer. This work-around gets the buttons
             # back, but at the expense of having the toolbar at the top
+            print "Using max workaround!"
             self.SetToolBar(self.toolbar)
         else:
             # On Windows platform, default window size is incorrect, so set
