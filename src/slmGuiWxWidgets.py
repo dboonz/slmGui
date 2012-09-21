@@ -86,6 +86,11 @@ class slmGui(wx.Frame):
     self.sizer.Add(self.previewButton,(4,6))
     self.Bind(wx.EVT_BUTTON,self.CreatePreview,self.previewButton)
 
+    # clear button
+    self.clearButton = wx.Button(self,-1,label="Clear shaper")
+    self.sizer.Add(self.clearButton,(4,7))
+    self.Bind(wx.EVT_BUTTON,self.ClearShaper,self.clearButton)
+
     # add notebook
     self.nb = wx.Notebook(self,-1)
     self.nb.sizer = wx.GridBagSizer()
@@ -110,6 +115,11 @@ class slmGui(wx.Frame):
     self.SetSizerAndFit(self.sizer)
     self.Show(True)
 #
+  def ClearShaper(self,event):
+    """ Clear the shaper """
+    print "Clearing shaper"
+    self.slmCal.slm.clear()
+
   def CreatePreview(self,event):
     "create a preview in the graphs"
      # get page
