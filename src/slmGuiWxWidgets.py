@@ -13,6 +13,7 @@ from matplotlib.backends.backend_wx import FigureCanvasWx as FigureCanvas
 
 from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 import slmCalibrated
+from utils import w2f
 
 
 class Plotter(wx.Panel):
@@ -38,8 +39,9 @@ class Plotter(wx.Panel):
     " Plot the phase function, requires a pure function "
     # create x-axis
     wavelength = np.linspace(600,900,1000)
+    #phasefunction is dependent on frequency, not wavelength, so convert
     vFun = np.vectorize(phasefunction)
-    phases = vFun(wavelength)
+    phases = vFun(w2f(wavelength))
     #print np.array([wavelength,phases]).transpose()
     self.axPhase.plot(wavelength,phases)
     self.axPhase.set_xlabel("Wavelength [nm]")
@@ -149,7 +151,7 @@ class slmGui(wx.Frame):
 
 #
   def writePhase(self):
-    self.slmCal.apply_phase(self.activeObject.returnFunction())
+    self.slmCal.apply_phase_on_freq(self.activeObject.returnFunction())
 #
 
 class FunctionObjectWrapper(wx.Panel):
@@ -167,10 +169,6 @@ class FunctionObjectWrapper(wx.Panel):
     return "Current phase function: " + self.phasefun.__str__()
     
 
-    #SinFunction(self)
-
-
-
 # all functions should have the same properties:
 class PhaseFunction():
   def __init__(self,parent,startRow=1, startCol=1):
@@ -186,7 +184,7 @@ class PhaseFunction():
 
   def returnFunction(self):
     "Return a pure function, dependent on the frequency"
-    return lambda l: None
+    return lambda f: None
   def processInput(self):
     """"This function should process all the input that was given to graphical
     interface objects. """
@@ -218,26 +216,30 @@ class Vshape(PhaseFunction):
 
 
   def returnFunction(self):
-    w0 = self.w0
-    steepness = self.steepness
+    t = self.t
     offset = self.offset
 
-    return lambda w: abs(w - w0)*steepness+offset
+    f0 = w2f(self.w0)
+    
+
+
+
+    return lambda f: abs(f - f0)*t+offset
 
   def initialize(self):
     print "Initializing VShape"
     self.w0 = 780
-    self.steepness = 0.1
+    self.t = 0.1
     self.offset = 0
 
     self.entryOffset = self.createGuiInputBox('Offset [2 \pi rad]',1,1)
     self.entryW0     = self.createGuiInputBox('center wl [nm]',1,2,780)
-    self.entrySteepness = self.createGuiInputBox('t [fs]',1,3,0.1)
+    self.entryt = self.createGuiInputBox('t [fs]',1,3,0.1)
 
   def processInput(self):
     try : 
       self.w0 = float(self.entryW0.GetValue())
-      self.steepness = 2*np.pi*float(self.entrySteepness.GetValue())
+      self.t = float(self.entryt.GetValue())*1e-15
       self.offset = float(self.entryOffset.GetValue())
     except ValueError:
       self.ShowError("One of the entries is incorrect")
@@ -282,7 +284,7 @@ class CosFunction(PhaseFunction):
       self.w0   = float(self.entryW0.GetValue())
       self.phi = float(self.entryPhi.GetValue())
       self.offset = float(self.entryOffset.GetValue())
-      self.t   = 2*np.pi*float(self.entryT.GetValue())
+      self.t   = 2*np.pi*float(self.entryT.GetValue())*1e-15
     except ValueError :
       self.ShowError("One of the entries is incorrect")
       print "One of the entries is not a number!"
