@@ -52,7 +52,7 @@ class Plotter(wx.Panel):
     x = np.arange(640)
     # get the data: do apply_phase with simulateOnly=True
     print "   PATTERN"
-    pattern = self.parent.slmCal.apply_phase(phasefunction,simulateOnly=True)
+    pattern = self.parent.slmCal.apply_phase_on_freq(phasefunction,simulateOnly=True)
     self.axU.plot(x,pattern,'-x')
     self.axU.set_xlabel("Pixel index #")
     self.axU.set_ylabel("Voltage")
@@ -176,8 +176,9 @@ class PhaseFunction():
   def __init__(self,parent,startRow=1, startCol=1):
     self.parent = parent
     self.initialize()
-    # create a bounding box
-    #
+    text = wx.StaticText(self.parent,-1,label=self.__str__())
+    self.parent.sizer.Add(text,(0,0),(2,2))
+
   def initialize(self):
     """ This function should set all relevant variables and create any graphical
     interface objects """
@@ -210,7 +211,11 @@ class PhaseFunction():
 class Vshape(PhaseFunction):
   # create a v-shape
   def __str__(self):
-    return "VShape"
+    return "VShape: abs(w-w0)*steepness+offset "
+
+
+
+
 
   def returnFunction(self):
     w0 = self.w0
@@ -225,14 +230,14 @@ class Vshape(PhaseFunction):
     self.steepness = 0.1
     self.offset = 0
 
-    self.entryOffset = self.createGuiInputBox('Offset',1,1)
+    self.entryOffset = self.createGuiInputBox('Offset [2 \pi rad]',1,1)
     self.entryW0     = self.createGuiInputBox('center wl [nm]',1,2,780)
-    self.entrySteepness = self.createGuiInputBox('steepness [rad/nm]',1,3,0.1)
+    self.entrySteepness = self.createGuiInputBox('t [fs]',1,3,0.1)
 
   def processInput(self):
     try : 
       self.w0 = float(self.entryW0.GetValue())
-      self.steepness = float(self.entrySteepness.GetValue())
+      self.steepness = 2*np.pi*float(self.entrySteepness.GetValue())
       self.offset = float(self.entryOffset.GetValue())
     except ValueError:
       self.ShowError("One of the entries is incorrect")
@@ -241,59 +246,50 @@ class Vshape(PhaseFunction):
 
 class CosFunction(PhaseFunction):
   def __str__(self):
-    return "Cosine!"
+    return "Cosine: offset+amp*cos((w-w0)*t+phi)"
+
   def returnFunction(self):
-    return lambda w: self.offset+ self.amp*cos(self.w*w+self.phi)
+    offset = self.offset
+    amp = self.amp
+    w0 = self.w0
+    phi = self.phi
+    t = self.t
+    return lambda w: offset + amp*cos((w-w0)*t+phi)
+
+#    return lambda w: self.offset+ self.amp*cos((w-w0)*+self.phi)
 
   def initialize(self):
     print "Initializing sinFunction"
     # relevant variables:
     self.amp = 1.
-    self.w   = 1.
+    self.w0   = 1.
     self.phi = 1.
     self.offset = 1.
+    self.t = 0
 
     # create entry boxes for the different props:
     self.entryOffset = self.createGuiInputBox('offset',1,1)
     self.entryAmp = self.createGuiInputBox('Amp [rad]',1,2,0)
-    self.entryW   = self.createGuiInputBox('w ',1,3,0)
+    self.entryW0   = self.createGuiInputBox('w0 ',1,3,0)
     self.entryPhi = self.createGuiInputBox('phi',1,4,0)
-#
-#    # create entry boxes for the different props:
-#    amptext = wx.StaticText(self.parent,-1,label="Amp [rad]")
-#    self.parent.sizer.Add(amptext,(1,1),(1,1))
-#    self.entryAmp = wx.TextCtrl(self.parent,-1,value=u"0")
-#    self.parent.sizer.Add(self.entryAmp,(1,2),(1,1),wx.EXPAND)
-#    
-#    wtext = wx.StaticText(self.parent,-1,label="w [rad]")
-#    self.parent.sizer.Add(wtext,(2,1),(1,1),wx.RIGHT)
-#    self.entryW = wx.TextCtrl(self.parent,-1,value=u"0")
-#    self.parent.sizer.Add(self.entryW,(2,2),(1,1),wx.EXPAND)
-#
-#    phitext = wx.StaticText(self.parent,-1,label="phi [rad]")
-#    self.parent.sizer.Add(phitext,(3,1),(1,1),wx.RIGHT)
-#    self.entryPhi = wx.TextCtrl(self.parent,-1,value=u"0")
-#    self.parent.sizer.Add(self.entryPhi,(3,2),(1,1),wx.EXPAND)
-#
+    self.entryT   = self.createGuiInputBox('t [fs]',1,5,0)
+
   def processInput(self):
     " update amp, w and phi, and display"
     print "Will shape with the cosine function. You entered: "
     try : 
       self.amp = float(self.entryAmp.GetValue())
-      self.w   = float(self.entryW.GetValue())
+      self.w0   = float(self.entryW0.GetValue())
       self.phi = float(self.entryPhi.GetValue())
       self.offset = float(self.entryOffset.GetValue())
+      self.t   = 2*np.pi*float(self.entryT.GetValue())
     except ValueError :
       self.ShowError("One of the entries is incorrect")
       print "One of the entries is not a number!"
-
-      print self.entryAmp.GetValue()
-      print self.entryW.GetValue()
-      print self.entryPhi.GetValue()
     
     print "parameters will be: "
     print "  A : %f" % self.amp
-    print "  w : %f" % self.w
+    print "  w : %f" % self.w0
     print "  phi:%f" % self.phi
 
 
