@@ -1,6 +1,8 @@
+#!/usr/bin/python
+import os
 import numpy
 import numpy as np
-from numpy import sin,cos,linspace
+from numpy import cos,linspace
 try :
   import wx
   from wx import Button
@@ -67,7 +69,13 @@ class slmGui(wx.Frame):
   def __init__(self,parent,id=-1,title='SLM control'):
     self.figureRoot = wx.Frame.__init__(self,parent,id,title)
     self.parent = parent
-    self.slmCal = slmCalibrated.slmCalibrated(port='/dev/ttyS0')
+
+    if os.name == 'nt':
+	    self.slmCal = slmCalibrated.slmCalibrated(port=0)
+	    print "Assuming windows"
+    else :
+	    self.slmCal = slmCalibrated.slmCalibrated(port='/dev/ttyS0')
+	    print "Assuming linux"
     self.initialize()
 
   def initialize(self):
@@ -183,7 +191,18 @@ class FunctionObjectWrapper(wx.Panel):
     
 
 if __name__ == '__main__':
-  app = wx.App()
-  frame = slmGui(None,-1,'testing title')
-  app.MainLoop()
+    import traceback
+    import sys
+    # This try-catch statement is done to ensure that you can read the exceptions in windows, before the shell is killed
+    try :
+      app = wx.App()
+      frame = slmGui(None,-1,'SLM gui')
+      app.MainLoop()
+    except Exception as e:
+        print "Exception occurred. "
+        print e.args
+        traceback.print_exc(file=sys.stdout)
+
+        discard = raw_input("Press any key to continue.")
+        raise
 

@@ -62,6 +62,7 @@ class Vshape(PhaseFunction):
     offset = self.offset
 
     f0 = w2f(self.w0)
+    print "f0 : " , f0 
     return lambda f: abs(f - f0)*t+offset
 
   def initialize(self):
@@ -92,6 +93,7 @@ class CalibrationFunction(PhaseFunction):
     # get boundaries for frequency:
     minFreq = w2f(self.centerwl+self.width)
     maxFreq = w2f(self.centerwl-self.width)
+    height = self.height
     # create a function to make a spike of width width
     def spike(f):
       if f < minFreq:
@@ -99,19 +101,21 @@ class CalibrationFunction(PhaseFunction):
       elif f > maxFreq:
         return self.offset
       else :
-        return self.offset+np.pi
+        return self.offset+height
     return spike
 
   def initialize(self):
     self.centerwlEntry = self.createGuiInputBox("center wl [nm]",1,1,780)
     self.offsetEntry = self.createGuiInputBox("Offset [rad]",1,2,0)
     self.widthEntry = self.createGuiInputBox("width [nm]",1,3,1)
+    self.heightEntry = self.createGuiInputBox("height [ pi rad]",1,4,1)
 
   def processInput(self):
     " update values"
     self.centerwl = float(self.centerwlEntry.GetValue())
     self.offset = float(self.offsetEntry.GetValue())
     self.width  = float(self.widthEntry.GetValue())
+    self.height = float(self.heightEntry.GetValue())
 
 
 class CosFunction(PhaseFunction):
@@ -138,11 +142,11 @@ class CosFunction(PhaseFunction):
     self.t = 0
 
     # create entry boxes for the different props:
-    self.entryOffset = self.createGuiInputBox('offset',1,1)
-    self.entryAmp = self.createGuiInputBox('Amp [rad]',1,2,0)
-    self.entryW0   = self.createGuiInputBox('w0 ',1,3,0)
-    self.entryPhi = self.createGuiInputBox('phi',1,4,0)
-    self.entryT   = self.createGuiInputBox('t [fs]',1,5,0)
+    self.entryOffset = self.createGuiInputBox('offset [pi rad]',1,1,0)
+    self.entryAmp = self.createGuiInputBox('Amp [pi rad]',1,2,2)
+    self.entryW0   = self.createGuiInputBox('lambda0 [nm] ',1,3,780)
+    self.entryPhi = self.createGuiInputBox('phi [rad]',1,4,0)
+    self.entryT   = self.createGuiInputBox('t [fs]',1,5,150)
 
   def processInput(self):
     " update amp, w and phi, and display"
