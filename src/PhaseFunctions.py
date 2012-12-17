@@ -15,13 +15,13 @@ from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 import slmCalibrated
 from utils import w2f
 
-# all functions should have the same properties:
 class PhaseFunction():
+
   def __init__(self,parent,startRow=1, startCol=1):
     self.parent = parent
     self.initialize()
     text = wx.StaticText(self.parent,-1,label=self.__str__())
-    self.parent.sizer.Add(text,(0,0),(2,2))
+    self.parent.sizer.Add(text,(0,0),(4,1)) # was (0,0),(2,2)
 
   def initialize(self):
     """ This function should set all relevant variables and create any graphical
@@ -71,9 +71,9 @@ class Vshape(PhaseFunction):
     self.t = 0.1
     self.offset = 0
 
-    self.entryOffset = self.createGuiInputBox('Offset [2 \pi rad]',1,1)
-    self.entryW0     = self.createGuiInputBox('center wl [nm]',1,2,780)
-    self.entryt = self.createGuiInputBox('t [fs]',1,3,0.1)
+    self.entryOffset = self.createGuiInputBox('Offset [2 \pi rad]',2,2)
+    self.entryW0     = self.createGuiInputBox('center wl [nm]',2,3,780)
+    self.entryt = self.createGuiInputBox('t [fs]',2,4,0.1)
 
   def processInput(self):
     try : 
