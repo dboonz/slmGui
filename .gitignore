@@ -1,0 +1,6 @@
+*.pyo
+*.pyc
+*.swp
+*.meta
+tags
+*.py~
